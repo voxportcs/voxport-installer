@@ -1,0 +1,119 @@
+<div class="bg-white dark:bg-slate-900 rounded-xl shadow p-4">
+    <h2 class="text-lg font-bold mb-4">CDR Logs</h2>
+
+    <!-- Filters -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+        <input id="cdr-from" type="date" class="border rounded px-2 py-1 text-sm">
+        <input id="cdr-to" type="date" class="border rounded px-2 py-1 text-sm">
+        <input id="cdr-caller" type="text" placeholder="Caller" class="border rounded px-2 py-1 text-sm">
+        <button id="btnApply" class="bg-indigo-600 text-white rounded px-3 py-1 text-sm"> Apply </button>
+    </div>
+
+    <!-- Table -->
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm border">
+            <thead class="bg-slate-100 dark:bg-slate-800">
+                <tr>
+                    <th class="p-2 text-left">Time</th>
+                    <th class="p-2 text-left">Caller</th>
+                    <th class="p-2 text-left">Destination</th>
+                    <th class="p-2 text-left">Duration</th>
+                    <th class="p-2 text-left">Billsec</th>
+                    <th class="p-2 text-left">Cause</th>
+                </tr>
+            </thead>
+            <tbody id="cdr-body"></tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex justify-between items-center mt-4 text-sm">
+        <div id="cdr-info"></div>
+        <div class="space-x-2">
+            <button id="btnPrev" class="px-3 py-1 border rounded">Prev</button>
+            <button id="btnNext" class="px-3 py-1 border rounded">Next</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+
+let cdrPage = 1;
+const cdrLimit = 25;
+let cdrTotal = 0;
+
+function loadCDR(page = 1) {
+    if (!window.Panel || !Panel.token) {
+        console.error('Panel or token not ready');
+        return;
+    }
+
+    cdrPage = page;
+
+    const from = document.getElementById('cdr-from').value;
+    const to = document.getElementById('cdr-to').value;
+    const caller = document.getElementById('cdr-caller').value;
+
+    let q = `?page=${cdrPage}&limit=${cdrLimit}`;
+    if (from) q += `&from=${from}`;
+    if (to) q += `&to=${to}`;
+    if (caller) q += `&caller=${encodeURIComponent(caller)}`;
+
+    Panel.api('/fs-cdr' + q).then(res => {
+        const tbody = document.getElementById('cdr-body');
+        tbody.innerHTML = '';
+
+        if (!res || !res.data || res.data.length === 0) {
+            tbody.innerHTML = `
+              <tr>
+                <td colspan="6" class="p-4 text-center text-slate-400">
+                  No CDR records found
+                </td>
+              </tr>`;
+            document.getElementById('cdr-info').innerText = '0 records';
+            return;
+        }
+
+        cdrTotal = res.total;
+
+        res.data.forEach(r => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="p-2">${r.answer_stamp || '-'}</td>
+                <td class="p-2">${r.caller || '-'}</td>
+                <td class="p-2">${r.destination || '-'}</td>
+                <td class="p-2">${r.duration || 0}</td>
+                <td class="p-2">${r.billsec || 0}</td>
+                <td class="p-2">${r.hangup_cause || '-'}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('cdr-info').innerText =
+          `Page ${cdrPage} of ${Math.max(1, Math.ceil(cdrTotal / cdrLimit))}`;
+    });
+}
+
+/* 🔥 SAFE BINDING */
+document.addEventListener('DOMContentLoaded', () => {
+
+    document.getElementById('btnApply')
+        .addEventListener('click', () => loadCDR(1));
+
+    document.getElementById('btnNext')
+        .addEventListener('click', () => {
+            if (cdrPage * cdrLimit < cdrTotal) loadCDR(cdrPage + 1);
+        });
+
+    document.getElementById('btnPrev')
+        .addEventListener('click', () => {
+            if (cdrPage > 1) loadCDR(cdrPage - 1);
+        });
+
+    // Initial load (SAFE delay)
+    setTimeout(() => loadCDR(1), 150);
+});
+
+})();
+</script>

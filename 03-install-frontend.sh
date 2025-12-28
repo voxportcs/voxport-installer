@@ -4,22 +4,17 @@ set -e
 echo "[*] Installing VoxportCS Frontend..."
 
 WEB_ROOT="/var/www/voip-panel"
+SRC_DIR="$(cd "$(dirname "$0")" && pwd)/frontend"
 
-# Create directories
-mkdir -p $WEB_ROOT
-mkdir -p $WEB_ROOT/assets/{css,js,images,fonts}
-mkdir -p $WEB_ROOT/modules
-
-# If frontend source exists (local dev copy)
-if [ -d "/root/frontend" ]; then
-  echo "[*] Copying frontend from /root/frontend"
-  rsync -av /root/frontend/ $WEB_ROOT/
-else
-  echo "[WARN] /root/frontend not found"
-  echo "Make sure index.html, login.html, assets/, modules/ exist"
+if [ ! -d "$SRC_DIR" ]; then
+  echo "[ERROR] Frontend source not found in installer repo"
+  echo "Expected: $SRC_DIR"
+  exit 1
 fi
 
-# Permissions
+mkdir -p $WEB_ROOT
+cp -r "$SRC_DIR/"* "$WEB_ROOT/"
+
 chown -R www-data:www-data $WEB_ROOT
 chmod -R 755 $WEB_ROOT
 

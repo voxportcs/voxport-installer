@@ -1,0 +1,87 @@
+<div class="bg-white dark:bg-slate-900 rounded-xl shadow p-4">
+    <h2 class="text-lg font-bold mb-4">Call Recordings</h2>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm border">
+            <thead class="bg-slate-100 dark:bg-slate-800">
+                <tr>
+                    <th class="p-2 text-left">Time</th>
+                    <th class="p-2 text-left">Caller</th>
+                    <th class="p-2 text-left">Destination</th>
+                    <th class="p-2 text-left">Billsec</th>
+                    <th class="p-2 text-left">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="rec-body"></tbody>
+        </table>
+    </div>
+
+    <div class="flex justify-between items-center mt-4 text-sm">
+        <div id="rec-info"></div>
+        <div class="space-x-2">
+            <button onclick="prevRec()" class="px-3 py-1 border rounded">Prev</button>
+            <button onclick="nextRec()" class="px-3 py-1 border rounded">Next</button>
+        </div>
+    </div>
+
+    <!-- Audio Player -->
+    <div id="playerBox" class="mt-4 hidden">
+        <audio id="audioPlayer" controls class="w-full"></audio>
+    </div>
+</div>
+
+<script>
+let recPage = 1;
+const recLimit = 20;
+let recTotal = 0;
+
+function loadRecordings(page = 1) {
+    recPage = page;
+
+    Panel.api(`/recordings?page=${recPage}&limit=${recLimit}`).then(res => {
+        const tbody = document.getElementById('rec-body');
+        tbody.innerHTML = '';
+
+        if (!res.data.length) {
+            tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">No recordings found</td></tr>`;
+            return;
+        }
+
+        res.data.forEach(r => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="p-2">${r.answer_stamp || ''}</td>
+                <td class="p-2">${r.caller}</td>
+                <td class="p-2">${r.destination}</td>
+                <td class="p-2">${r.billsec}</td>
+                <td class="p-2 space-x-2">
+                    <button class="text-indigo-600" onclick="playRec(${r.id})">▶ Play</button>
+                    <a class="text-emerald-600" href="/api/recordings/play/${r.id}" target="_blank">⬇ Download</a>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('rec-info').innerText =
+            `Page ${recPage}`;
+    });
+}
+
+function playRec(id) {
+    const player = document.getElementById('audioPlayer');
+    const box = document.getElementById('playerBox');
+    player.src = `/api/recordings/play/${id}`;
+    box.classList.remove('hidden');
+    player.play();
+}
+
+function nextRec() {
+    loadRecordings(recPage + 1);
+}
+
+function prevRec() {
+    if (recPage > 1) loadRecordings(recPage - 1);
+}
+
+loadRecordings();
+</script>
