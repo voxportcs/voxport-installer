@@ -6,7 +6,6 @@ echo " VoxportCS VoIP Panel Installer"
 echo "======================================"
 
 BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
-
 find "$BASE_DIR" -name "*.sh" -exec chmod +x {} \;
 
 $BASE_DIR/00-check-os.sh
