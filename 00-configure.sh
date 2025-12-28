@@ -1,26 +1,26 @@
 #!/bin/bash
 set -e
 
-CONFIG="/root/installer/config.env"
+BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
+CONFIG="$BASE_DIR/config.env"
 
 echo "======================================"
 echo " VoxportCS Initial Configuration"
 echo "======================================"
 
-read -p "Admin username [admin]: " ADMIN_USER
+read -p "Admin username [admin]: " ADMIN_USER < /dev/tty
 ADMIN_USER=${ADMIN_USER:-admin}
 
-read -s -p "Admin password: " ADMIN_PASS
-echo ""
+read -s -p "Admin password: " ADMIN_PASS < /dev/tty
+echo
 
-read -s -p "Database password for voipuser: " DB_PASS
-echo ""
+read -s -p "Database password for voipuser: " DB_PASS < /dev/tty
+echo
 
-read -p "Domain or Server IP: " DOMAIN
+read -p "Domain or Server IP: " DOMAIN < /dev/tty
+read -p "SignalWire FreeSWITCH TOKEN: " FS_TOKEN < /dev/tty
 
-read -p "SignalWire FreeSWITCH TOKEN: " FS_TOKEN
-
-cat > $CONFIG <<EOF
+cat > "$CONFIG" <<EOF
 ADMIN_USER=$ADMIN_USER
 ADMIN_PASS=$ADMIN_PASS
 
@@ -32,6 +32,6 @@ DOMAIN=$DOMAIN
 FS_TOKEN=$FS_TOKEN
 EOF
 
-chmod 600 $CONFIG
+chmod 600 "$CONFIG"
 
-echo "✅ Configuration saved"
+echo "✅ Configuration saved at $CONFIG"
