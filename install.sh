@@ -7,7 +7,7 @@ echo "======================================"
 
 BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-chmod +x $BASE_DIR/*.sh
+find "$BASE_DIR" -name "*.sh" -exec chmod +x {} \;
 
 $BASE_DIR/00-check-os.sh
 $BASE_DIR/00-configure.sh
